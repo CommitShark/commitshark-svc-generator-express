@@ -1,5 +1,5 @@
 {
-  "name": "express-microservice-generator",
+  "name": "commitshark-svc-generator",
   "version": "1.0.0",
   "description": "A generator for creating cloud native express microservices from a template repo",
   "main": "dist/generate.js",
