@@ -90,6 +90,17 @@ async function main() {
       }
     }
 
+    // Install dependencies
+    console.log("Installing dependencies...");
+    execSync("npm install", { stdio: "inherit", cwd: projectDir });
+
+    // Initialize a new Git repository
+    console.log("Initializing a new Git repository...");
+    const gitRepo = git(projectDir);
+    await gitRepo.init();
+    await gitRepo.add(".");
+    await gitRepo.commit("Initial commit");
+
     if (shouldSetupBaseImageInMinikube) {
       // Switch docker env to minikube
       console.log("Switching docker env to minikube");
@@ -105,17 +116,6 @@ async function main() {
         cwd: projectDir,
       });
     }
-
-    // Install dependencies
-    console.log("Installing dependencies...");
-    execSync("npm install", { stdio: "inherit", cwd: projectDir });
-
-    // Initialize a new Git repository
-    console.log("Initializing a new Git repository...");
-    const gitRepo = git(projectDir);
-    await gitRepo.init();
-    await gitRepo.add(".");
-    await gitRepo.commit("Initial commit");
 
     console.log(
       `Project '${projectName}' created successfully in ${projectDir}`
