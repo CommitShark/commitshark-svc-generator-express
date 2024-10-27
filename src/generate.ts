@@ -8,6 +8,7 @@ import * as yaml from "yaml";
 
 interface ProjectConfig {
   projectName: string;
+  shouldSetupBaseImageInMinikube: boolean;
 }
 
 function isValidProjectName(name: string): boolean {
@@ -19,22 +20,33 @@ function isValidProjectName(name: string): boolean {
 async function main() {
   try {
     // Prompt for project details
-    const { projectName } = await inquirer.prompt<ProjectConfig>([
-      {
-        name: "projectName",
-        message: "Enter your project name:",
-        type: "input",
-        validate(input: string) {
-          if (isValidProjectName(input)) {
-            return true;
-          }
-          return "Project name is invalid. It should contain only letters, numbers, dashes (-), and underscores (_), with no spaces or special characters. The name cannot start or end with a dash or underscore, and it must be between 1 and 50 characters long.";
+    const { projectName, shouldSetupBaseImageInMinikube } =
+      await inquirer.prompt<ProjectConfig>([
+        {
+          name: "projectName",
+          message: "Enter your project name:",
+          type: "input",
+          validate(input: string) {
+            if (isValidProjectName(input)) {
+              return true;
+            }
+            return "Project name is invalid. It should contain only letters, numbers, dashes (-), and underscores (_), with no spaces or special characters. The name cannot start or end with a dash or underscore, and it must be between 1 and 50 characters long.";
+          },
+          transformer(value) {
+            return value.toLowerCase();
+          },
         },
-        transformer(value) {
-          return value.toLowerCase();
+        {
+          name: "shouldSetupBaseImageInMinikube",
+          message:
+            "Would you like me to setup a placeholder image? This would be utilized by devspace.",
+          type: "list",
+          choices: [
+            { name: "Yes", value: true, short: "y" },
+            { name: "No", value: false, short: "n" },
+          ],
         },
-      },
-    ]);
+      ]);
 
     // Define repo URL and destination directory
     const templateRepo =
@@ -76,6 +88,22 @@ async function main() {
       } else {
         console.warn(`No ${replacePath} file found in the project.`);
       }
+    }
+
+    if (shouldSetupBaseImageInMinikube) {
+      // Switch docker env to minikube
+      console.log("Switching docker env to minikube");
+      execSync("eval $(minikube -p minikube docker-env)", {
+        stdio: "inherit",
+        cwd: projectDir,
+      });
+
+      // Switch docker env to minikube
+      console.log("Building image");
+      execSync(`docker build . -t ${projectName}-svc -f Dockerfile.dev`, {
+        stdio: "inherit",
+        cwd: projectDir,
+      });
     }
 
     // Install dependencies

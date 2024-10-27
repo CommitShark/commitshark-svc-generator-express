@@ -61,6 +61,8 @@ async function main() {
         const projectDir = path_1.default.join(process.cwd(), projectName);
         // Clone the template repository
         await (0, simple_git_1.default)().clone(templateRepo, projectDir);
+        // Remove the existing .git folder to avoid inheriting history
+        await fs_extra_1.default.remove(path_1.default.join(projectDir, ".git"));
         // Modify `package.json` with project details
         const packageJsonPath = path_1.default.join(projectDir, "package.json");
         const packageJson = await fs_extra_1.default.readJson(packageJsonPath);
@@ -91,6 +93,12 @@ async function main() {
         // Install dependencies
         console.log("Installing dependencies...");
         (0, child_process_1.execSync)("npm install", { stdio: "inherit", cwd: projectDir });
+        // Initialize a new Git repository
+        console.log("Initializing a new Git repository...");
+        const gitRepo = (0, simple_git_1.default)(projectDir);
+        await gitRepo.init();
+        await gitRepo.add(".");
+        await gitRepo.commit("Initial commit");
         console.log(`Project '${projectName}' created successfully in ${projectDir}`);
     }
     catch (error) {
