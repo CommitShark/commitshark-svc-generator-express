@@ -40,7 +40,7 @@ function isValidProjectName(name) {
 async function main() {
     try {
         // Prompt for project details
-        const { projectName } = await inquirer_1.default.prompt([
+        const { projectName, shouldSetupBaseImageInMinikube } = await inquirer_1.default.prompt([
             {
                 name: "projectName",
                 message: "Enter your project name:",
@@ -54,6 +54,15 @@ async function main() {
                 transformer(value) {
                     return value.toLowerCase();
                 },
+            },
+            {
+                name: "shouldSetupBaseImageInMinikube",
+                message: "Would you like me to setup a placeholder image? This would be utilized by devspace.",
+                type: "list",
+                choices: [
+                    { name: "Yes", value: true, short: "y" },
+                    { name: "No", value: false, short: "n" },
+                ],
             },
         ]);
         // Define repo URL and destination directory
@@ -89,6 +98,20 @@ async function main() {
             else {
                 console.warn(`No ${replacePath} file found in the project.`);
             }
+        }
+        if (shouldSetupBaseImageInMinikube) {
+            // Switch docker env to minikube
+            console.log("Switching docker env to minikube");
+            (0, child_process_1.execSync)("eval $(minikube -p minikube docker-env)", {
+                stdio: "inherit",
+                cwd: projectDir,
+            });
+            // Switch docker env to minikube
+            console.log("Building image");
+            (0, child_process_1.execSync)(`docker build . -t ${projectName}-svc -f Dockerfile.dev`, {
+                stdio: "inherit",
+                cwd: projectDir,
+            });
         }
         // Install dependencies
         console.log("Installing dependencies...");
