@@ -44,6 +44,9 @@ async function main() {
     // Clone the template repository
     await git().clone(templateRepo, projectDir);
 
+    // Remove the existing .git folder to avoid inheriting history
+    await fs.remove(path.join(projectDir, ".git"));
+
     // Modify `package.json` with project details
     const packageJsonPath = path.join(projectDir, "package.json");
     const packageJson = await fs.readJson(packageJsonPath);
@@ -78,6 +81,13 @@ async function main() {
     // Install dependencies
     console.log("Installing dependencies...");
     execSync("npm install", { stdio: "inherit", cwd: projectDir });
+
+    // Initialize a new Git repository
+    console.log("Initializing a new Git repository...");
+    const gitRepo = git(projectDir);
+    await gitRepo.init();
+    await gitRepo.add(".");
+    await gitRepo.commit("Initial commit");
 
     console.log(
       `Project '${projectName}' created successfully in ${projectDir}`
