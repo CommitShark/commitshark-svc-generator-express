@@ -62,7 +62,7 @@ async function main() {
     // Modify `package.json` with project details
     const packageJsonPath = path.join(projectDir, "package.json");
     const packageJson = await fs.readJson(packageJsonPath);
-    packageJson.name = `${projectName}-svc`;
+    packageJson.name = projectName;
     await fs.writeJson(packageJsonPath, packageJson, { spaces: 2 });
 
     // List .yaml file paths needing placeholder replacement
@@ -102,16 +102,26 @@ async function main() {
     await gitRepo.commit("Initial commit");
 
     if (shouldSetupBaseImageInMinikube) {
-      // Switch docker env to minikube
-      console.log("Switching docker env to minikube");
-      execSync("eval $(minikube -p minikube docker-env)", {
-        stdio: "inherit",
-        cwd: projectDir,
-      });
+      // Get Docker environment variables from Minikube and set them in Node.js
+      const dockerEnv = execSync("minikube -p minikube docker-env --shell bash")
+        .toString()
+        .split("\n")
+        .filter((line) => line.startsWith("export"))
+        .reduce((env, line) => {
+          const match = /export (.*?)="(.*?)"/.exec(line);
+          if (match) {
+            const [, key, value] = match;
+            (env as any)[key] = value;
+          }
+          return env;
+        }, {});
 
-      // Switch docker env to minikube
-      console.log("Building image");
-      execSync(`docker build . -t ${projectName}-svc -f Dockerfile.dev`, {
+      // Set the Docker environment variables in the process environment
+      Object.assign(process.env, dockerEnv);
+
+      // Build the Docker image
+      console.log("Building image in Minikube's Docker environment...");
+      execSync(`docker build . -t ${projectName} -f Dockerfile.dev`, {
         stdio: "inherit",
         cwd: projectDir,
       });
