@@ -42,8 +42,8 @@ async function main() {
             "Would you like me to setup a placeholder image? This would be utilized by devspace.",
           type: "list",
           choices: [
-            { name: "Yes", value: true, short: "y" },
-            { name: "No", value: false, short: "n" },
+            { name: "Yes", value: true, short: "Yes" },
+            { name: "No", value: false, short: "No" },
           ],
         },
       ]);
